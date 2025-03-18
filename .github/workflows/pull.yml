@@ -1,0 +1,36 @@
+name: Test Supabase with Colima
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sundays
+  workflow_dispatch:     # Allow manual triggering
+
+jobs:
+  test-supabase:
+    runs-on: macos-latest  # Using the M1 macOS runner
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Install Homebrew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          
+      - name: Install Colima
+        run: brew install colima
+        
+      - name: Start Colima
+        run: colima start
+        
+      - name: Install latest Supabase CLI
+        run: brew install supabase/tap/supabase
+        
+      - name: Run Supabase tests
+        run: |
+          # Initialize your test project
+          supabase start
+
+      - name: Show if the previous step succeded or not
+        run: |
+          echo "Previous step status: $?"
