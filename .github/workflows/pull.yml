@@ -19,9 +19,11 @@ jobs:
           
       - name: Install Colima
         run: brew install colima
-        
+      - name: Install Docker
+        run: brew install docker
+
       - name: Start Colima
-        run: colima start
+        run: colima start -t vz
         
       - name: Install latest Supabase CLI
         run: brew install supabase/tap/supabase
