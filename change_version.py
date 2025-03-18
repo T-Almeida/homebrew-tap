@@ -3,9 +3,8 @@
 import sys
 import re
 import requests
-from typing import Dict, Optional
 
-def get_checksums(version: str) -> Dict[str, str]:
+def get_checksums(version):
     """Fetch checksums from GitHub release."""
     checksums_url = f"https://github.com/supabase/cli/releases/download/v{version}/supabase_{version}_checksums.txt"
     response = requests.get(checksums_url)
@@ -16,44 +15,51 @@ def get_checksums(version: str) -> Dict[str, str]:
     checksums = {}
     for line in response.text.splitlines():
         if line.strip():
-            sha256, filename = line.split()
-            checksums[filename] = sha256
+            parts = line.split()
+            if len(parts) >= 2:
+                sha256, filename = parts[0], parts[1]
+                checksums[filename] = sha256
     
     return checksums
 
-def update_formula(version: str, checksums: Dict[str, str]):
+def update_formula(version, checksums):
     """Update the supabase.rb formula with new version and checksums."""
+    # Read the formula file
     with open('supabase.rb', 'r') as f:
-        content = f.read()
+        lines = f.readlines()
     
-    # Update version
-    content = re.sub(r'version "[\d.]+"', f'version "{version}"', content)
+    # Process each line
+    for i in range(len(lines)):
+        # Update version
+        if 'version "' in lines[i]:
+            lines[i] = re.sub(r'version "[\d.]+"', f'version "{version}"', lines[i])
+        
+        # Update URL and extract platform
+        elif 'url "https://github.com/supabase/cli/releases/download/' in lines[i]:
+            # Extract platform from current URL
+            url_match = re.search(r'supabase_([\w_]+)\.tar\.gz', lines[i])
+            if url_match:
+                platform = url_match.group(1)
+                filename = f"supabase_{platform}.tar.gz"
+                
+                # Update URL with new version
+                lines[i] = re.sub(
+                    r'url "https://github.com/supabase/cli/releases/download/v[^/]+/[^"]+"',
+                    f'url "https://github.com/supabase/cli/releases/download/v{version}/{filename}"',
+                    lines[i]
+                )
+                
+                # Update the corresponding checksum (next line)
+                if i+1 < len(lines) and 'sha256 "' in lines[i+1] and filename in checksums:
+                    lines[i+1] = re.sub(
+                        r'sha256 "[^"]+"',
+                        f'sha256 "{checksums[filename]}"',
+                        lines[i+1]
+                    )
     
-    # Update URLs and checksums for each platform
-    platforms = {
-        'darwin_arm64': f'supabase_darwin_arm64.tar.gz',
-        'darwin_amd64': f'supabase_darwin_amd64.tar.gz',
-        'linux_arm64': f'supabase_linux_arm64.tar.gz',
-        'linux_amd64': f'supabase_linux_amd64.tar.gz'
-    }
-    
-    for platform, filename in platforms.items():
-        if filename in checksums:
-            # Update URL
-            content = re.sub(
-                f'url "https://github.com/supabase/cli/releases/download/v[^/]+/{filename}"',
-                f'url "https://github.com/supabase/cli/releases/download/v{version}/{filename}"',
-                content
-            )
-            # Update checksum
-            content = re.sub(
-                f'sha256 "[^"]+"',
-                f'sha256 "{checksums[filename]}"',
-                content
-            )
-    
+    # Write the updated formula file
     with open('supabase.rb', 'w') as f:
-        f.write(content)
+        f.writelines(lines)
 
 def main():
     if len(sys.argv) != 2:
@@ -69,4 +75,4 @@ def main():
     print("Update completed successfully!")
 
 if __name__ == "__main__":
-    main() 
+    main()
