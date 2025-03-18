@@ -17,10 +17,8 @@ jobs:
         run: |
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           
-      - name: Install Colima
-        run: brew install colima
-      - name: Install Docker
-        run: brew install docker
+      - name: Install Colima and docker
+        run: brew install colima docker
 
       - name: Apply hack
         run: |
@@ -28,7 +26,7 @@ jobs:
           sudo curl -L -o $LIMACTL_PATH https://github.com/mikekazakov/lima-nohvf/raw/master/limactl && chmod +x $LIMACTL_PATH
 
       - name: Start Colima
-        run: colima start -t vz 
+        run: colima start -t qemu
         
       - name: Install latest Supabase CLI
         run: brew install supabase/tap/supabase
