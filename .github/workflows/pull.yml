@@ -21,11 +21,14 @@ jobs:
         run: brew install colima
       - name: Install Docker
         run: brew install docker
-      - name: Check disk
-        run: df -h
+
+      - name: Apply hack
+        run: |
+          LIMACTL_PATH=$(brew --prefix)/bin/limactl
+          curl -L -o $LIMACTL_PATH https://github.com/mikekazakov/lima-nohvf/raw/master/limactl && chmod +x $LIMACTL_PATH
 
       - name: Start Colima
-        run: colima start -t vz -d 5
+        run: colima start -t vz 
         
       - name: Install latest Supabase CLI
         run: brew install supabase/tap/supabase
