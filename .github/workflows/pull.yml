@@ -23,7 +23,7 @@ jobs:
         run: brew install docker
 
       - name: Start Colima
-        run: colima start -t vz
+        run: colima start -t vz -d 10
         
       - name: Install latest Supabase CLI
         run: brew install supabase/tap/supabase
